@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatMew 喵喵聊</title>
+    <style>
+        /* * =========================================
+         * CSS 變數設定 (配色主題)
+         * =========================================
+         */
+        :root {
+            /* 淺色主題 (預設) - 柔和可愛風 */
+            --bg-color: #fff0f5; /* 淺粉背景 */
+            --header-bg: #ffb7c5; /* header 粉色 */
+            --header-text: #5e3a45;
+            --chat-area-bg: #fff0f5;
+            --input-area-bg: #ffffff;
+            --input-border: #ffd1dc;
+            
+            /* 訊息氣泡 */
+            --bubble-me-bg: #8ec5fc; /* 自己的訊息 (粉藍) */
+            --bubble-me-text: #2c3e50;
+            --bubble-friend-bg: #ffffff; /* 對方的訊息 (白) */
+            --bubble-friend-text: #444;
+            --bubble-shadow: 0 4px 6px rgba(0,0,0,0.05);
+
+            /* 按鈕與互動 */
+            --btn-primary: #ff9a9e;
+            --btn-hover: #ff758c;
+            --text-meta: #888; /* 時間文字顏色 */
+        }
+
+        /* 深色主題 */
+        .dark-mode {
+            --bg-color: #1a1a2e;
+            --header-bg: #16213e;
+            --header-text: #e94560;
+            --chat-area-bg: #1a1a2e;
+            --input-area-bg: #0f3460;
+            --input-border: #533483;
+
+            /* 訊息氣泡 */
+            --bubble-me-bg: #e94560; /* 自己的訊息 (霓虹紅) */
+            --bubble-me-text: #fff;
+            --bubble-friend-bg: #2a2a40; /* 對方的訊息 (深灰藍) */
+            --bubble-friend-text: #eee;
+            --bubble-shadow: 0 4px 6px rgba(0,0,0,0.3);
+
+            --btn-primary: #e94560;
+            --btn-hover: #ff2e63;
+            --text-meta: #aaa;
+        }
+
+        /* * =========================================
+         * 全域設定 & 版面配置
+         * =========================================
+         */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            transition: background-color 0.3s, color 0.3s; /* 平滑的主題切換效果 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 防止整個頁面捲動，只捲動對話區 */
+        }
+
+        /* * =========================================
+         * Header (標題列)
+         * =========================================
+         */
+        header {
+            background-color: var(--header-bg);
+            color: var(--header-text);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .user-status {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #2ecc71; /* 綠色燈號 */
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: inherit;
+            padding: 5px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon-btn:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        /* SVG 圖示大小 */
+        svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        /* * =========================================
+         * Main (對話區)
+         * =========================================
+         */
+        main {
+            flex: 1; /* 佔滿剩餘空間 */
+            background-color: var(--chat-area-bg);
+            padding: 20px;
+            overflow-y: auto; /* 內容過多時捲動 */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        /* 對話氣泡容器 */
+        .message-row {
+            display: flex;
+            align-items: flex-end; /* 對齊底部 */
+            gap: 10px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease-out; /* 進場動畫 */
+        }
+
+        /* 自己 (右邊) */
+        .message-row.me {
+            align-self: flex-end;
+            flex-direction: row-reverse; /* 反轉排列：大頭貼在最右 */
+        }
+
+        /* 對方 (左邊) */
+        .message-row.friend {
+            align-self: flex-start;
+        }
+
+        /* 大頭貼 */
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #ddd;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 訊息內容區塊 (包含名字、氣泡、時間) */
+        .message-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sender-name {
+            font-size: 0.75rem;
+            color: var(--text-meta);
+            margin-bottom: 4px;
+        }
+        
+        .me .sender-name {
+            text-align: right;
+            display: none; /* 通常自己的訊息不顯示名字，保持簡潔 */
+        }
+
+        .bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            position: relative;
+            box-shadow: var(--bubble-shadow);
+            word-wrap: break-word;
+        }
+
+        /* 自己的氣泡樣式 */
+        .me .bubble {
+            background-color: var(--bubble-me-bg);
+            color: var(--bubble-me-text);
+            border-bottom-right-radius: 4px; /* 右下角尖角 */
+        }
+
+        /* 對方的氣泡樣式 */
+        .friend .bubble {
+            background-color: var(--bubble-friend-bg);
+            color: var(--bubble-friend-text);
+            border-bottom-left-radius: 4px; /* 左下角尖角 */
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            color: var(--text-meta);
+            margin-top: 4px;
+        }
+
+        .me .message-time {
+            text-align: right;
+        }
+
+        /* 進場動畫 Keyframe */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* * =========================================
+         * Footer (輸入區)
+         * =========================================
+         */
+        footer {
+            background-color: var(--input-area-bg);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            background-color: var(--bg-color); /* 讓輸入框背景跟隨主題微調 */
+            border-radius: 25px;
+            padding: 5px 15px;
+            border: 2px solid var(--input-border);
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 5px;
+            outline: none;
+            font-size: 1rem;
+            color: var(--header-text);
+        }
+
+        /* 按鈕樣式 */
+        .send-btn {
+            background-color: var(--btn-primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        .send-btn:active {
+            transform: scale(0.9);
+        }
+        
+        .send-btn:hover {
+            background-color: var(--btn-hover);
+        }
+        
+        .emoji-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #888;
+            padding-right: 5px;
+        }
+
+        /* 捲軸美化 (Webkit browsers) */
+        main::-webkit-scrollbar {
+            width: 6px;
+        }
+        main::-webkit-scrollbar-thumb {
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 3px;
+        }
+        .dark-mode main::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. 頂部標題列 -->
+    <header>
+        <div class="header-left">
+            <div class="back-btn">
+                <!-- SVG: 返回箭頭 -->
+                <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            </div>
+            <div class="user-info">
+                <div class="user-name">阿喵 🐱</div>
+                <div class="user-status">
+                    <span class="status-dot"></span> 在線上
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <!-- 主題切換按鈕 -->
+            <button class="icon-btn" id="theme-toggle" title="切換主題">
+                <!-- 預設顯示月亮 (代表點了變深色) -->
+                <svg id="theme-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+            </button>
+            <!-- 設定按鈕 (裝飾用) -->
+            <button class="icon-btn">
+                <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- 2. 中間對話區 -->
+    <main id="chat-box">
+        <!-- 這裡的訊息會由 JavaScript 動態生成，預設先放一些範例 -->
+    </main>
+
+    <!-- 3. 底部輸入區 -->
+    <footer>
+        <div class="input-group">
+            <button class="emoji-btn">😊</button>
+            <input type="text" id="message-input" placeholder="輸入訊息..." autocomplete="off">
+        </div>
+        <button class="send-btn" id="send-btn">
+            <!-- SVG: 紙飛機 -->
+            <svg viewBox="0 0 24 24" style="margin-left: -2px; width: 20px; height: 20px;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+    </footer>
+
+    <!-- 隱藏的音效標籤 (Base64 編碼的短促氣泡音) -->
+    <audio id="send-sound">
+        <source src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq" type="audio/mp3">
+    </audio>
+
+    <script>
+        // DOM 元素選取
+        const chatBox = document.getElementById('chat-box');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const sendSound = document.getElementById('send-sound');
+
+        // 預設的機器人回覆資料庫
+        const botReplies = [
+            "真的嗎？太酷了吧！ 😲",
+            "已收到你的訊息 😄",
+            "這週末要不要一起去吃火鍋？ 🍲",
+            "哈哈哈哈，笑死我了 😂",
+            "嗯嗯，我正在聽。",
+            "這張圖好可愛喔！ ❤️",
+            "稍等我一下，我先去洗澡 🛁"
+        ];
+
+        // 假的大頭貼 URL (使用 Placehold.co 生成簡單的帶字圓圖)
+        const myAvatarUrl = 'https://ui-avatars.com/api/?name=Me&background=8ec5fc&color=fff&rounded=true';
+        const friendAvatarUrl = 'https://ui-avatars.com/api/?name=Cat&background=ffb7c5&color=fff&rounded=true';
+
+        // 初始化：載入範例訊息
+        window.onload = function() {
+            addMessage('friend', '嗨！你好嗎？ 👋');
+            setTimeout(() => {
+                addMessage('friend', '今天要不要出來玩？');
+            }, 500);
+        };
+
+        // 1. 新增訊息的核心函式
+        function addMessage(sender, text) {
+            // 建立訊息列容器
+            const row = document.createElement('div');
+            row.classList.add('message-row', sender); // sender: 'me' or 'friend'
+
+            // 1. 大頭貼
+            const avatarDiv = document.createElement('div');
+            avatarDiv.classList.add('avatar');
+            const avatarImg = document.createElement('img');
+            avatarImg.src = sender === 'me' ? myAvatarUrl : friendAvatarUrl;
+            avatarDiv.appendChild(avatarImg);
+
+            // 2. 訊息內容 (名字、氣泡、時間)
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content');
+
+            // 名字 (只有對方顯示，自己隱藏)
+            if (sender === 'friend') {
+                const nameDiv = document.createElement('div');
+                nameDiv.classList.add('sender-name');
+                nameDiv.innerText = '阿喵 🐱';
+                contentDiv.appendChild(nameDiv);
+            }
+
+            // 氣泡
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.classList.add('bubble');
+            bubbleDiv.innerText = text;
+
+            // 時間
+            const timeDiv = document.createElement('div');
+            timeDiv.classList.add('message-time');
+            timeDiv.innerText = getCurrentTime();
+
+            // 組裝內容區
+            contentDiv.appendChild(bubbleDiv);
+            contentDiv.appendChild(timeDiv);
+
+            // 根據發送者決定 DOM 順序 (其實 CSS row-reverse 已經處理了 me 的視覺順序，但 DOM 結構我們統一)
+            // 為了 CSS Flex 的通用性，我們維持：Avatar + Content
+            row.appendChild(avatarDiv);
+            row.appendChild(contentDiv);
+
+            // 加入聊天室
+            chatBox.appendChild(row);
+
+            // 自動捲到底部
+            scrollToBottom();
+        }
+
+        // 2. 捲動到底部函式
+        function scrollToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // 3. 取得目前時間 (格式 10:30 PM)
+        function getCurrentTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12; // 0 變成 12
+            
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
+        // 4. 處理發送訊息
+        function handleSend() {
+            const text = messageInput.value.trim();
+            if (text === "") return;
+
+            // 發送自己的訊息
+            addMessage('me', text);
+            messageInput.value = ""; // 清空輸入框
+            messageInput.focus();
+
+            // 播放音效 (處理瀏覽器自動播放限制，通常需要互動後才能播)
+            try {
+                sendSound.currentTime = 0;
+                sendSound.play().catch(e => console.log('Audio play failed (interaction needed):', e));
+            } catch (e) {
+                // 忽略錯誤
+            }
+
+            // 模擬機器人回覆 (延遲 1~1.5 秒)
+            setTimeout(() => {
+                const randomReply = botReplies[Math.floor(Math.random() * botReplies.length)];
+                addMessage('friend', randomReply);
+            }, 1000 + Math.random() * 500);
+        }
+
+        // 5. 事件監聽
+        // 點擊發送按鈕
+        sendBtn.addEventListener('click', handleSend);
+
+        // 輸入框按下 Enter
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                handleSend();
+            }
+        });
+
+        // 6. 主題切換邏輯
+        let isDarkMode = false;
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            isDarkMode = !isDarkMode;
+
+            // 切換圖示 (SVG path)
+            if (isDarkMode) {
+                // 變成太陽圖示
+                themeIcon.innerHTML = '<path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/>';
+            } else {
+                // 變回月亮圖示
+                themeIcon.innerHTML = '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
+            }
+        });
+
+    </script>
+</body>
+</html>
