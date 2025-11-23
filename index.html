@@ -2,36 +2,33 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatMew 喵喵聊</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ChatMew 喵喵聊 (多人連線版)</title>
     <style>
         /* * =========================================
-         * CSS 變數設定 (配色主題)
+         * CSS 變數設定
          * =========================================
          */
         :root {
-            /* 淺色主題 (預設) - 柔和可愛風 */
-            --bg-color: #fff0f5; /* 淺粉背景 */
-            --header-bg: #ffb7c5; /* header 粉色 */
+            /* 淺色主題 */
+            --bg-color: #fff0f5;
+            --header-bg: #ffb7c5;
             --header-text: #5e3a45;
             --chat-area-bg: #fff0f5;
             --input-area-bg: #ffffff;
             --input-border: #ffd1dc;
             
-            /* 訊息氣泡 */
-            --bubble-me-bg: #8ec5fc; /* 自己的訊息 (粉藍) */
+            --bubble-me-bg: #8ec5fc;
             --bubble-me-text: #2c3e50;
-            --bubble-friend-bg: #ffffff; /* 對方的訊息 (白) */
-            --bubble-friend-text: #444;
-            --bubble-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            --bubble-other-bg: #ffffff;
+            --bubble-other-text: #444;
+            --bubble-shadow: 0 2px 4px rgba(0,0,0,0.05);
 
-            /* 按鈕與互動 */
             --btn-primary: #ff9a9e;
             --btn-hover: #ff758c;
-            --text-meta: #888; /* 時間文字顏色 */
+            --text-meta: #888;
         }
 
-        /* 深色主題 */
         .dark-mode {
             --bg-color: #1a1a2e;
             --header-bg: #16213e;
@@ -40,12 +37,11 @@
             --input-area-bg: #0f3460;
             --input-border: #533483;
 
-            /* 訊息氣泡 */
-            --bubble-me-bg: #e94560; /* 自己的訊息 (霓虹紅) */
+            --bubble-me-bg: #e94560;
             --bubble-me-text: #fff;
-            --bubble-friend-bg: #2a2a40; /* 對方的訊息 (深灰藍) */
-            --bubble-friend-text: #eee;
-            --bubble-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            --bubble-other-bg: #2a2a40;
+            --bubble-other-text: #eee;
+            --bubble-shadow: 0 2px 4px rgba(0,0,0,0.3);
 
             --btn-primary: #e94560;
             --btn-hover: #ff2e63;
@@ -53,7 +49,7 @@
         }
 
         /* * =========================================
-         * 全域設定 & 版面配置
+         * 全域設定
          * =========================================
          */
         * {
@@ -61,144 +57,193 @@
             margin: 0;
             padding: 0;
             font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
-            transition: background-color 0.3s, color 0.3s; /* 平滑的主題切換效果 */
+            -webkit-tap-highlight-color: transparent; /* 移除手機點擊高亮 */
         }
 
         body {
             background-color: var(--bg-color);
-            height: 100vh;
+            height: 100dvh; /* 使用 dvh 避免手機網址列遮擋 */
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* 防止整個頁面捲動，只捲動對話區 */
+            overflow: hidden;
+            transition: background-color 0.3s;
         }
 
         /* * =========================================
-         * Header (標題列)
+         * Login Screen (登入畫面)
          * =========================================
          */
+        #login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 20px;
+            transition: opacity 0.5s;
+        }
+
+        .login-card {
+            background: var(--input-area-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+
+        .login-title {
+            color: var(--header-text);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .avatar-selection {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .avatar-option {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .avatar-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-option.selected {
+            border-color: var(--btn-primary);
+            transform: scale(1.1);
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--input-border);
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            outline: none;
+            background: var(--bg-color);
+            color: var(--header-text);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--btn-primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* * =========================================
+         * App Container (聊天主介面)
+         * =========================================
+         */
+        #app-container {
+            display: none; /* 登入前隱藏 */
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Header */
         header {
             background-color: var(--header-bg);
             color: var(--header-text);
-            padding: 15px 20px;
+            padding: 12px 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            flex-shrink: 0;
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
 
-        .back-btn {
-            cursor: pointer;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-        }
-
-        .user-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-name {
-            font-weight: bold;
+        .room-info h1 {
             font-size: 1.1rem;
+            margin: 0;
         }
-
-        .user-status {
-            font-size: 0.8rem;
+        
+        .online-count {
+            font-size: 0.75rem;
             opacity: 0.8;
             display: flex;
             align-items: center;
             gap: 4px;
         }
-
+        
         .status-dot {
             width: 8px;
             height: 8px;
-            background-color: #2ecc71; /* 綠色燈號 */
+            background-color: #2ecc71;
             border-radius: 50%;
-            display: inline-block;
         }
 
-        .header-right {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: inherit;
-            padding: 5px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .icon-btn:hover {
-            background-color: rgba(255,255,255,0.2);
-        }
-
-        /* SVG 圖示大小 */
-        svg {
-            width: 24px;
-            height: 24px;
-            fill: currentColor;
-        }
-
-        /* * =========================================
-         * Main (對話區)
-         * =========================================
-         */
+        /* Main Chat Area */
         main {
-            flex: 1; /* 佔滿剩餘空間 */
+            flex: 1;
             background-color: var(--chat-area-bg);
-            padding: 20px;
-            overflow-y: auto; /* 內容過多時捲動 */
+            padding: 15px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            scroll-behavior: smooth;
+            gap: 15px;
+            scroll-behavior: auto; /* 改為 auto 避免程式捲動時太慢 */
         }
 
-        /* 對話氣泡容器 */
         .message-row {
             display: flex;
-            align-items: flex-end; /* 對齊底部 */
-            gap: 10px;
+            align-items: flex-end;
+            gap: 8px;
             max-width: 85%;
-            animation: fadeIn 0.3s ease-out; /* 進場動畫 */
+            animation: fadeIn 0.2s ease-out;
         }
 
-        /* 自己 (右邊) */
         .message-row.me {
             align-self: flex-end;
-            flex-direction: row-reverse; /* 反轉排列：大頭貼在最右 */
+            flex-direction: row-reverse;
         }
 
-        /* 對方 (左邊) */
-        .message-row.friend {
+        .message-row.other {
             align-self: flex-start;
         }
 
-        /* 大頭貼 */
         .avatar {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background-color: #ddd;
             overflow: hidden;
             flex-shrink: 0;
-            border: 2px solid rgba(255,255,255,0.5);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         
         .avatar img {
@@ -207,83 +252,80 @@
             object-fit: cover;
         }
 
-        /* 訊息內容區塊 (包含名字、氣泡、時間) */
         .message-content {
             display: flex;
             flex-direction: column;
         }
 
         .sender-name {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-meta);
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            margin-left: 4px;
         }
         
         .me .sender-name {
-            text-align: right;
-            display: none; /* 通常自己的訊息不顯示名字，保持簡潔 */
+            display: none;
         }
 
         .bubble {
-            padding: 12px 16px;
-            border-radius: 18px;
+            padding: 10px 14px;
+            border-radius: 16px;
             font-size: 0.95rem;
             line-height: 1.4;
             position: relative;
             box-shadow: var(--bubble-shadow);
             word-wrap: break-word;
+            word-break: break-all;
         }
 
-        /* 自己的氣泡樣式 */
         .me .bubble {
             background-color: var(--bubble-me-bg);
             color: var(--bubble-me-text);
-            border-bottom-right-radius: 4px; /* 右下角尖角 */
+            border-bottom-right-radius: 4px;
         }
 
-        /* 對方的氣泡樣式 */
-        .friend .bubble {
-            background-color: var(--bubble-friend-bg);
-            color: var(--bubble-friend-text);
-            border-bottom-left-radius: 4px; /* 左下角尖角 */
+        .other .bubble {
+            background-color: var(--bubble-other-bg);
+            color: var(--bubble-other-text);
+            border-bottom-left-radius: 4px;
         }
 
         .message-time {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--text-meta);
-            margin-top: 4px;
+            margin-top: 2px;
+            margin-right: 4px;
+            text-align: right; /* 時間統一靠右或跟隨氣泡 */
+        }
+        .other .message-time {
+            text-align: left;
+            margin-left: 4px;
         }
 
-        .me .message-time {
-            text-align: right;
-        }
-
-        /* 進場動畫 Keyframe */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* * =========================================
-         * Footer (輸入區)
-         * =========================================
-         */
+        /* Footer Input */
         footer {
             background-color: var(--input-area-bg);
-            padding: 10px 15px;
+            padding: 8px 12px; /* 縮小 padding 增加手機打字空間 */
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             border-top: 1px solid rgba(0,0,0,0.05);
+            flex-shrink: 0;
         }
 
         .input-group {
             flex: 1;
             display: flex;
-            background-color: var(--bg-color); /* 讓輸入框背景跟隨主題微調 */
-            border-radius: 25px;
-            padding: 5px 15px;
-            border: 2px solid var(--input-border);
+            background-color: var(--bg-color);
+            border-radius: 20px;
+            padding: 4px 12px;
+            border: 1px solid var(--input-border);
             align-items: center;
         }
 
@@ -291,259 +333,382 @@
             flex: 1;
             border: none;
             background: transparent;
-            padding: 10px 5px;
+            padding: 8px 0;
             outline: none;
-            font-size: 1rem;
+            font-size: 16px; /* 防止 iOS Safari 自動縮放 */
             color: var(--header-text);
         }
 
-        /* 按鈕樣式 */
         .send-btn {
             background-color: var(--btn-primary);
             color: white;
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: transform 0.1s, background-color 0.2s;
+            flex-shrink: 0;
         }
 
         .send-btn:active {
-            transform: scale(0.9);
-        }
-        
-        .send-btn:hover {
-            background-color: var(--btn-hover);
-        }
-        
-        .emoji-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.2rem;
-            color: #888;
-            padding-right: 5px;
+            transform: scale(0.95);
         }
 
-        /* 捲軸美化 (Webkit browsers) */
-        main::-webkit-scrollbar {
-            width: 6px;
+        svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
         }
-        main::-webkit-scrollbar-thumb {
-            background-color: rgba(0,0,0,0.1);
-            border-radius: 3px;
+
+        /* Loading Indicator */
+        .loading-spinner {
+            border: 3px solid rgba(0,0,0,0.1);
+            border-top: 3px solid var(--btn-primary);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none; /* 預設隱藏 */
         }
-        .dark-mode main::-webkit-scrollbar-thumb {
-            background-color: rgba(255,255,255,0.1);
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     </style>
 </head>
 <body>
 
-    <!-- 1. 頂部標題列 -->
-    <header>
-        <div class="header-left">
-            <div class="back-btn">
-                <!-- SVG: 返回箭頭 -->
-                <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+    <!-- 1. 登入畫面 -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="login-title">歡迎來到 ChatMew 🐱</div>
+            
+            <div class="avatar-selection" id="avatar-grid">
+                <!-- 由 JS 生成選項 -->
             </div>
-            <div class="user-info">
-                <div class="user-name">阿喵 🐱</div>
-                <div class="user-status">
-                    <span class="status-dot"></span> 在線上
+
+            <input type="text" id="nickname-input" class="login-input" placeholder="請輸入你的暱稱" maxlength="10">
+            <button id="login-btn" class="login-btn">進入聊天室</button>
+            <div id="login-loading" class="loading-spinner" style="margin: 10px auto;"></div>
+        </div>
+    </div>
+
+    <!-- 2. 主程式容器 -->
+    <div id="app-container">
+        <header>
+            <div class="header-left">
+                <div class="room-info">
+                    <h1>喵喵大廳</h1>
+                    <div class="online-count">
+                        <span class="status-dot"></span> <span id="status-text">連線中...</span>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="header-right">
-            <!-- 主題切換按鈕 -->
-            <button class="icon-btn" id="theme-toggle" title="切換主題">
-                <!-- 預設顯示月亮 (代表點了變深色) -->
-                <svg id="theme-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+            <div class="header-right" style="display: flex; gap: 10px;">
+                <button class="icon-btn" id="theme-toggle" style="background:none; border:none; cursor:pointer; color:inherit;">
+                    <svg id="theme-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <main id="chat-box">
+            <!-- 訊息將在此顯示 -->
+        </main>
+
+        <footer>
+            <div class="input-group">
+                <input type="text" id="message-input" placeholder="輸入訊息..." autocomplete="off">
+            </div>
+            <button class="send-btn" id="send-btn">
+                <svg viewBox="0 0 24 24" style="margin-left: -2px; width: 18px; height: 18px;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
-            <!-- 設定按鈕 (裝飾用) -->
-            <button class="icon-btn">
-                <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-            </button>
-        </div>
-    </header>
+        </footer>
+    </div>
 
-    <!-- 2. 中間對話區 -->
-    <main id="chat-box">
-        <!-- 這裡的訊息會由 JavaScript 動態生成，預設先放一些範例 -->
-    </main>
-
-    <!-- 3. 底部輸入區 -->
-    <footer>
-        <div class="input-group">
-            <button class="emoji-btn">😊</button>
-            <input type="text" id="message-input" placeholder="輸入訊息..." autocomplete="off">
-        </div>
-        <button class="send-btn" id="send-btn">
-            <!-- SVG: 紙飛機 -->
-            <svg viewBox="0 0 24 24" style="margin-left: -2px; width: 20px; height: 20px;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
-    </footer>
-
-    <!-- 隱藏的音效標籤 (Base64 編碼的短促氣泡音) -->
+    <!-- 音效 -->
     <audio id="send-sound">
         <source src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq" type="audio/mp3">
     </audio>
 
-    <script>
-        // DOM 元素選取
+    <script type="module">
+        // ------------------------------------------------------------------
+        // Firebase Setup & Imports
+        // ------------------------------------------------------------------
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State Management
+        let currentUser = null; // { uid, name, avatar }
+        let selectedAvatar = 'https://ui-avatars.com/api/?name=Cat&background=ffb7c5&color=fff&rounded=true'; // Default
+        
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
         const chatBox = document.getElementById('chat-box');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
+        const avatarGrid = document.getElementById('avatar-grid');
+        const nicknameInput = document.getElementById('nickname-input');
+        const loginBtn = document.getElementById('login-btn');
+        const loginLoading = document.getElementById('login-loading');
+        const statusText = document.getElementById('status-text');
+        const sendSound = document.getElementById('send-sound');
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
-        const sendSound = document.getElementById('send-sound');
 
-        // 預設的機器人回覆資料庫
-        const botReplies = [
-            "真的嗎？太酷了吧！ 😲",
-            "已收到你的訊息 😄",
-            "這週末要不要一起去吃火鍋？ 🍲",
-            "哈哈哈哈，笑死我了 😂",
-            "嗯嗯，我正在聽。",
-            "這張圖好可愛喔！ ❤️",
-            "稍等我一下，我先去洗澡 🛁"
+        // Avatar List (Cute Animals)
+        const avatars = [
+            'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4',
+            'https://api.dicebear.com/7.x/adventurer/svg?seed=Coco&backgroundColor=ffdfbf',
+            'https://api.dicebear.com/7.x/adventurer/svg?seed=Mittens&backgroundColor=c0aede',
+            'https://api.dicebear.com/7.x/adventurer/svg?seed=Buddy&backgroundColor=d1d4f9',
+            'https://api.dicebear.com/7.x/adventurer/svg?seed=Bella&backgroundColor=ffd5dc',
+            'https://api.dicebear.com/7.x/adventurer/svg?seed=Rocky&backgroundColor=c1f5d6',
+            'https://api.dicebear.com/7.x/adventurer/svg?seed=Luna&backgroundColor=ffdfbf',
+            'https://api.dicebear.com/7.x/adventurer/svg?seed=Leo&backgroundColor=ffdfbf'
         ];
 
-        // 假的大頭貼 URL (使用 Placehold.co 生成簡單的帶字圓圖)
-        const myAvatarUrl = 'https://ui-avatars.com/api/?name=Me&background=8ec5fc&color=fff&rounded=true';
-        const friendAvatarUrl = 'https://ui-avatars.com/api/?name=Cat&background=ffb7c5&color=fff&rounded=true';
-
-        // 初始化：載入範例訊息
-        window.onload = function() {
-            addMessage('friend', '嗨！你好嗎？ 👋');
-            setTimeout(() => {
-                addMessage('friend', '今天要不要出來玩？');
-            }, 500);
-        };
-
-        // 1. 新增訊息的核心函式
-        function addMessage(sender, text) {
-            // 建立訊息列容器
-            const row = document.createElement('div');
-            row.classList.add('message-row', sender); // sender: 'me' or 'friend'
-
-            // 1. 大頭貼
-            const avatarDiv = document.createElement('div');
-            avatarDiv.classList.add('avatar');
-            const avatarImg = document.createElement('img');
-            avatarImg.src = sender === 'me' ? myAvatarUrl : friendAvatarUrl;
-            avatarDiv.appendChild(avatarImg);
-
-            // 2. 訊息內容 (名字、氣泡、時間)
-            const contentDiv = document.createElement('div');
-            contentDiv.classList.add('message-content');
-
-            // 名字 (只有對方顯示，自己隱藏)
-            if (sender === 'friend') {
-                const nameDiv = document.createElement('div');
-                nameDiv.classList.add('sender-name');
-                nameDiv.innerText = '阿喵 🐱';
-                contentDiv.appendChild(nameDiv);
-            }
-
-            // 氣泡
-            const bubbleDiv = document.createElement('div');
-            bubbleDiv.classList.add('bubble');
-            bubbleDiv.innerText = text;
-
-            // 時間
-            const timeDiv = document.createElement('div');
-            timeDiv.classList.add('message-time');
-            timeDiv.innerText = getCurrentTime();
-
-            // 組裝內容區
-            contentDiv.appendChild(bubbleDiv);
-            contentDiv.appendChild(timeDiv);
-
-            // 根據發送者決定 DOM 順序 (其實 CSS row-reverse 已經處理了 me 的視覺順序，但 DOM 結構我們統一)
-            // 為了 CSS Flex 的通用性，我們維持：Avatar + Content
-            row.appendChild(avatarDiv);
-            row.appendChild(contentDiv);
-
-            // 加入聊天室
-            chatBox.appendChild(row);
-
-            // 自動捲到底部
-            scrollToBottom();
+        // ------------------------------------------------------------------
+        // Initialization
+        // ------------------------------------------------------------------
+        
+        // 1. Generate Avatar Selection Grid
+        function initAvatarGrid() {
+            avatars.forEach((url, index) => {
+                const div = document.createElement('div');
+                div.className = 'avatar-option';
+                if (index === 0) {
+                    div.classList.add('selected');
+                    selectedAvatar = url;
+                }
+                
+                const img = document.createElement('img');
+                img.src = url;
+                
+                div.appendChild(img);
+                div.onclick = () => {
+                    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                    selectedAvatar = url;
+                };
+                avatarGrid.appendChild(div);
+            });
         }
+        initAvatarGrid();
 
-        // 2. 捲動到底部函式
-        function scrollToBottom() {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+        // 2. Authentication Flow
+        async function initAuth() {
+            loginLoading.style.display = 'block';
+            loginBtn.disabled = true;
 
-        // 3. 取得目前時間 (格式 10:30 PM)
-        function getCurrentTime() {
-            const now = new Date();
-            let hours = now.getHours();
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            
-            hours = hours % 12;
-            hours = hours ? hours : 12; // 0 變成 12
-            
-            return `${hours}:${minutes} ${ampm}`;
-        }
-
-        // 4. 處理發送訊息
-        function handleSend() {
-            const text = messageInput.value.trim();
-            if (text === "") return;
-
-            // 發送自己的訊息
-            addMessage('me', text);
-            messageInput.value = ""; // 清空輸入框
-            messageInput.focus();
-
-            // 播放音效 (處理瀏覽器自動播放限制，通常需要互動後才能播)
             try {
-                sendSound.currentTime = 0;
-                sendSound.play().catch(e => console.log('Audio play failed (interaction needed):', e));
-            } catch (e) {
-                // 忽略錯誤
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+                alert("登入系統發生錯誤，請重新整理頁面。");
+            } finally {
+                loginLoading.style.display = 'none';
+                loginBtn.disabled = false;
             }
-
-            // 模擬機器人回覆 (延遲 1~1.5 秒)
-            setTimeout(() => {
-                const randomReply = botReplies[Math.floor(Math.random() * botReplies.length)];
-                addMessage('friend', randomReply);
-            }, 1000 + Math.random() * 500);
         }
+        initAuth();
 
-        // 5. 事件監聽
-        // 點擊發送按鈕
-        sendBtn.addEventListener('click', handleSend);
-
-        // 輸入框按下 Enter
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                handleSend();
+        // Listen for auth state
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = {
+                    uid: user.uid,
+                    name: "Guest", // Will be updated on login
+                    avatar: selectedAvatar
+                };
+                console.log("Authenticated as:", user.uid);
             }
         });
 
-        // 6. 主題切換邏輯
+        // ------------------------------------------------------------------
+        // App Logic
+        // ------------------------------------------------------------------
+
+        // Handle Login Button Click
+        loginBtn.addEventListener('click', () => {
+            const name = nicknameInput.value.trim();
+            if (!name) {
+                alert("請輸入暱稱喔！");
+                return;
+            }
+            if (!currentUser) {
+                alert("正在連線到伺服器，請稍候...");
+                return;
+            }
+
+            // Update local user state
+            currentUser.name = name;
+            currentUser.avatar = selectedAvatar;
+
+            // Switch UI
+            loginScreen.style.opacity = '0';
+            setTimeout(() => {
+                loginScreen.style.display = 'none';
+                appContainer.style.display = 'flex';
+                // Trigger reflow for animation if needed, but display flex is enough
+                startChatListener();
+                statusText.innerText = "即時連線中";
+            }, 500);
+        });
+
+        // Firestore Listener (Real-time Chat)
+        let isFirstLoad = true;
+        
+        function startChatListener() {
+            if (!auth.currentUser) return;
+            
+            // Query all messages (simple query rule)
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages');
+            
+            onSnapshot(colRef, (snapshot) => {
+                const messages = [];
+                snapshot.forEach(doc => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort in memory (Rule: No complex orderBy in query)
+                // Filter out invalid timestamps just in case
+                messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                
+                // Keep only last 50 messages to prevent DOM explosion
+                const recentMessages = messages.slice(-50);
+
+                renderMessages(recentMessages);
+            }, (error) => {
+                console.error("Firestore error:", error);
+                statusText.innerText = "連線中斷";
+            });
+        }
+
+        // Render Messages
+        function renderMessages(messages) {
+            chatBox.innerHTML = ''; // Clear and rebuild (simple approach for small lists)
+            
+            messages.forEach(msg => {
+                const isMe = msg.userId === currentUser.uid;
+                const row = document.createElement('div');
+                row.className = `message-row ${isMe ? 'me' : 'other'}`;
+                
+                // Avatar
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'avatar';
+                const avatarImg = document.createElement('img');
+                avatarImg.src = msg.avatarUrl || 'https://via.placeholder.com/40';
+                avatarDiv.appendChild(avatarImg);
+                
+                // Content
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                
+                // Name (Only for others)
+                if (!isMe) {
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'sender-name';
+                    nameDiv.textContent = msg.senderName || 'Anonymous';
+                    contentDiv.appendChild(nameDiv);
+                }
+
+                // Bubble
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.textContent = msg.text;
+                
+                // Time
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                timeDiv.textContent = formatTime(msg.timestamp);
+
+                contentDiv.appendChild(bubble);
+                contentDiv.appendChild(timeDiv);
+
+                row.appendChild(avatarDiv);
+                row.appendChild(contentDiv);
+                chatBox.appendChild(row);
+            });
+
+            // Scroll to bottom
+            setTimeout(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 50);
+        }
+
+        // Send Message Function
+        async function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text || !currentUser) return;
+
+            messageInput.value = ''; // Clear immediately
+            
+            try {
+                // Play sound
+                sendSound.currentTime = 0;
+                sendSound.play().catch(() => {});
+
+                // Add to Firestore
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages'), {
+                    text: text,
+                    senderName: currentUser.name,
+                    avatarUrl: currentUser.avatar,
+                    userId: currentUser.uid,
+                    timestamp: Date.now() // Use client timestamp for simple sorting
+                });
+            } catch (error) {
+                console.error("Error sending message:", error);
+                alert("訊息發送失敗");
+            }
+        }
+
+        // Utilities
+        function formatTime(ts) {
+            if (!ts) return '';
+            const date = new Date(ts);
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
+        // ------------------------------------------------------------------
+        // Event Listeners
+        // ------------------------------------------------------------------
+        
+        sendBtn.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Theme Toggle
         let isDarkMode = false;
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
             isDarkMode = !isDarkMode;
-
-            // 切換圖示 (SVG path)
             if (isDarkMode) {
-                // 變成太陽圖示
                 themeIcon.innerHTML = '<path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/>';
             } else {
-                // 變回月亮圖示
                 themeIcon.innerHTML = '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
             }
         });
