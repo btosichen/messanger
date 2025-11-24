@@ -3,31 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ChatMew 喵喵聊 (多人連線版)</title>
+    <title>ChatMew 喵喵聊 (通用版)</title>
     <style>
         /* * =========================================
-         * CSS 變數設定
+         * CSS 變數與主題
          * =========================================
          */
         :root {
-            /* 淺色主題 */
             --bg-color: #fff0f5;
             --header-bg: #ffb7c5;
             --header-text: #5e3a45;
             --chat-area-bg: #fff0f5;
             --input-area-bg: #ffffff;
             --input-border: #ffd1dc;
-            
             --bubble-me-bg: #8ec5fc;
             --bubble-me-text: #2c3e50;
             --bubble-other-bg: #ffffff;
             --bubble-other-text: #444;
-            --bubble-shadow: 0 2px 4px rgba(0,0,0,0.05);
-
             --btn-primary: #ff9a9e;
-            --btn-hover: #ff758c;
-            --btn-disabled: #cccccc;
-            --btn-error: #ff6b6b; /* 新增錯誤狀態顏色 */
+            --btn-disabled: #ccc;
             --text-meta: #888;
         }
 
@@ -38,24 +32,15 @@
             --chat-area-bg: #1a1a2e;
             --input-area-bg: #0f3460;
             --input-border: #533483;
-
             --bubble-me-bg: #e94560;
             --bubble-me-text: #fff;
             --bubble-other-bg: #2a2a40;
             --bubble-other-text: #eee;
-            --bubble-shadow: 0 2px 4px rgba(0,0,0,0.3);
-
             --btn-primary: #e94560;
-            --btn-hover: #ff2e63;
-            --btn-disabled: #555555;
-            --btn-error: #d63031;
+            --btn-disabled: #555;
             --text-meta: #aaa;
         }
 
-        /* * =========================================
-         * 全域設定
-         * =========================================
-         */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -73,10 +58,7 @@
             transition: background-color 0.3s;
         }
 
-        /* * =========================================
-         * Login Screen (登入畫面)
-         * =========================================
-         */
+        /* 登入畫面 */
         #login-screen {
             position: fixed;
             top: 0;
@@ -103,13 +85,6 @@
             text-align: center;
         }
 
-        .login-title {
-            color: var(--header-text);
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-
         .avatar-selection {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -126,17 +101,8 @@
             overflow: hidden;
             transition: transform 0.2s;
         }
-
-        .avatar-option img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .avatar-option.selected {
-            border-color: var(--btn-primary);
-            transform: scale(1.1);
-        }
+        .avatar-option img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-option.selected { border-color: var(--btn-primary); transform: scale(1.1); }
 
         .login-input {
             width: 100%;
@@ -144,7 +110,7 @@
             border: 2px solid var(--input-border);
             border-radius: 10px;
             font-size: 1rem;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             outline: none;
             background: var(--bg-color);
             color: var(--header-text);
@@ -160,30 +126,51 @@
             font-size: 1.1rem;
             cursor: pointer;
             font-weight: bold;
-            transition: background-color 0.3s;
+            margin-bottom: 10px;
         }
+        .login-btn:disabled { background-color: var(--btn-disabled); cursor: not-allowed; }
 
-        .login-btn:disabled {
-            background-color: var(--btn-disabled);
-            cursor: not-allowed;
-            opacity: 0.8;
-        }
-        
-        .login-btn.error {
-            background-color: var(--btn-error);
-        }
-
-        .connection-status {
-            margin-top: 15px;
-            font-size: 0.85rem;
+        .config-btn {
+            background: none;
+            border: none;
             color: var(--text-meta);
-            min-height: 1.2em;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
         }
 
-        /* * =========================================
-         * App Container (聊天主介面)
-         * =========================================
-         */
+        /* Config Modal */
+        #config-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .config-card {
+            background: var(--input-area-bg);
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            color: var(--header-text);
+        }
+        .config-card textarea {
+            width: 100%;
+            height: 150px;
+            margin: 10px 0;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid var(--input-border);
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        /* 聊天介面 */
         #app-container {
             display: none;
             flex-direction: column;
@@ -202,30 +189,12 @@
             flex-shrink: 0;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .room-info h1 {
-            font-size: 1.1rem;
-            margin: 0;
-        }
-        
-        .online-count {
+        .status-badge {
             font-size: 0.75rem;
-            opacity: 0.8;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #2ecc71;
-            border-radius: 50%;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.3);
+            margin-left: 8px;
         }
 
         main {
@@ -236,201 +205,92 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            scroll-behavior: auto;
         }
 
-        .message-row {
-            display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            max-width: 85%;
-            animation: fadeIn 0.2s ease-out;
-        }
-
-        .message-row.me {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-
-        .message-row.other {
-            align-self: flex-start;
-        }
-
-        .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background-color: #ddd;
-            overflow: hidden;
-            flex-shrink: 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
+        .message-row { display: flex; align-items: flex-end; gap: 8px; max-width: 85%; animation: fadeIn 0.2s; }
+        .message-row.me { align-self: flex-end; flex-direction: row-reverse; }
+        .message-row.other { align-self: flex-start; }
         
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .message-content {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sender-name {
-            font-size: 0.7rem;
-            color: var(--text-meta);
-            margin-bottom: 2px;
-            margin-left: 4px;
-        }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
         
-        .me .sender-name {
-            display: none;
-        }
-
-        .bubble {
-            padding: 10px 14px;
-            border-radius: 16px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            position: relative;
-            box-shadow: var(--bubble-shadow);
-            word-wrap: break-word;
-            word-break: break-all;
-        }
-
-        .me .bubble {
-            background-color: var(--bubble-me-bg);
-            color: var(--bubble-me-text);
-            border-bottom-right-radius: 4px;
-        }
-
-        .other .bubble {
-            background-color: var(--bubble-other-bg);
-            color: var(--bubble-other-text);
-            border-bottom-left-radius: 4px;
-        }
-
-        .message-time {
-            font-size: 0.65rem;
-            color: var(--text-meta);
-            margin-top: 2px;
-            margin-right: 4px;
-            text-align: right;
-        }
-        .other .message-time {
-            text-align: left;
-            margin-left: 4px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .bubble { padding: 10px 14px; border-radius: 16px; font-size: 0.95rem; line-height: 1.4; word-break: break-all; }
+        .me .bubble { background-color: var(--bubble-me-bg); color: var(--bubble-me-text); border-bottom-right-radius: 4px; }
+        .other .bubble { background-color: var(--bubble-other-bg); color: var(--bubble-other-text); border-bottom-left-radius: 4px; }
+        
+        .message-time { font-size: 0.65rem; color: var(--text-meta); margin-top: 2px; text-align: right; }
+        .other .message-time { text-align: left; }
 
         footer {
             background-color: var(--input-area-bg);
             padding: 8px 12px;
             display: flex;
-            align-items: center;
             gap: 8px;
             border-top: 1px solid rgba(0,0,0,0.05);
             flex-shrink: 0;
         }
-
         .input-group {
-            flex: 1;
-            display: flex;
-            background-color: var(--bg-color);
-            border-radius: 20px;
-            padding: 4px 12px;
-            border: 1px solid var(--input-border);
+            flex: 1; display: flex; background: var(--bg-color);
+            border-radius: 20px; padding: 4px 12px; border: 1px solid var(--input-border);
             align-items: center;
         }
-
         input[type="text"] {
-            flex: 1;
-            border: none;
-            background: transparent;
-            padding: 8px 0;
-            outline: none;
-            font-size: 16px;
-            color: var(--header-text);
+            flex: 1; border: none; background: transparent; padding: 8px 0;
+            outline: none; font-size: 16px; color: var(--header-text);
         }
-
         .send-btn {
-            background-color: var(--btn-primary);
-            color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            flex-shrink: 0;
+            background: var(--btn-primary); color: white; border: none;
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-
-        .send-btn:active {
-            transform: scale(0.95);
-        }
-
-        svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
-
-        .loading-spinner {
-            border: 3px solid rgba(0,0,0,0.1);
-            border-top: 3px solid var(--btn-primary);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: none;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <!-- 1. 登入畫面 -->
-    <div id="login-screen">
-        <div class="login-card">
-            <div class="login-title">歡迎來到 ChatMew 🐱</div>
-            
-            <div class="avatar-selection" id="avatar-grid"></div>
-
-            <input type="text" id="nickname-input" class="login-input" placeholder="請輸入你的暱稱" maxlength="10">
-            
-            <button id="login-btn" class="login-btn" disabled>連線伺服器中...</button>
-            <div id="login-loading" class="loading-spinner" style="margin: 10px auto; display: block;"></div>
-            
-            <!-- 新增狀態顯示文字 -->
-            <div id="connection-debug" class="connection-status">正在初始化...</div>
+    <!-- 設定 Modal (貼上 Firebase Config 用) -->
+    <div id="config-modal">
+        <div class="config-card">
+            <h3>☁️ 連線設定</h3>
+            <p style="font-size:0.85rem; opacity:0.8; margin-bottom:10px;">
+                若要跨裝置連線 (手機↔電腦)，請貼上 Firebase Config JSON。<br>
+                若留空，將使用「本機模式」(僅同裝置分頁可通話)。
+            </p>
+            <textarea id="config-input" placeholder='{"apiKey": "...", "authDomain": "...", ...}'></textarea>
+            <div style="display:flex; gap:10px;">
+                <button class="login-btn" id="save-config-btn">儲存並重整</button>
+                <button class="login-btn" onclick="document.getElementById('config-modal').style.display='none'" style="background:#aaa;">取消</button>
+            </div>
         </div>
     </div>
 
-    <!-- 2. 主程式容器 -->
+    <!-- 登入畫面 -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h2 class="login-title">ChatMew 🐱</h2>
+            
+            <div class="avatar-selection" id="avatar-grid"></div>
+
+            <input type="text" id="nickname-input" class="login-input" placeholder="請輸入暱稱" maxlength="10">
+            
+            <button id="login-btn" class="login-btn">進入聊天室</button>
+            <div id="status-msg" style="font-size:0.8rem; color:#888; margin-top:5px;">正在偵測環境...</div>
+            
+            <button class="config-btn" onclick="document.getElementById('config-modal').style.display='flex'">
+                ⚙️ 設定雲端資料庫 (跨裝置用)
+            </button>
+        </div>
+    </div>
+
+    <!-- 聊天主介面 -->
     <div id="app-container">
         <header>
-            <div class="header-left">
-                <div class="room-info">
-                    <h1>喵喵大廳</h1>
-                    <div class="online-count">
-                        <span class="status-dot"></span> <span id="status-text">連線中...</span>
-                    </div>
-                </div>
+            <div style="display:flex; align-items:center;">
+                <h1 style="font-size:1.1rem; margin:0;">喵喵大廳</h1>
+                <span id="mode-badge" class="status-badge">本機模式</span>
             </div>
-            <div class="header-right" style="display: flex; gap: 10px;">
-                <button class="icon-btn" id="theme-toggle" style="background:none; border:none; cursor:pointer; color:inherit;">
-                    <svg id="theme-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
-                </button>
-            </div>
+            <button onclick="toggleTheme()" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">🌗</button>
         </header>
 
         <main id="chat-box"></main>
@@ -439,312 +299,250 @@
             <div class="input-group">
                 <input type="text" id="message-input" placeholder="輸入訊息..." autocomplete="off">
             </div>
-            <button class="send-btn" id="send-btn">
-                <svg viewBox="0 0 24 24" style="margin-left: -2px; width: 18px; height: 18px;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
+            <button class="send-btn" id="send-btn">➤</button>
         </footer>
     </div>
 
-    <audio id="send-sound">
-        <source src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq" type="audio/mp3">
-    </audio>
+    <audio id="send-sound" src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"></audio>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // DOM Elements
-        const loginScreen = document.getElementById('login-screen');
-        const appContainer = document.getElementById('app-container');
-        const chatBox = document.getElementById('chat-box');
-        const messageInput = document.getElementById('message-input');
-        const sendBtn = document.getElementById('send-btn');
-        const avatarGrid = document.getElementById('avatar-grid');
-        const nicknameInput = document.getElementById('nickname-input');
-        const loginBtn = document.getElementById('login-btn');
-        const loginLoading = document.getElementById('login-loading');
-        const statusText = document.getElementById('status-text');
-        const connectionDebug = document.getElementById('connection-debug');
-        const sendSound = document.getElementById('send-sound');
-        const themeToggle = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
+        const els = {
+            loginScreen: document.getElementById('login-screen'),
+            appContainer: document.getElementById('app-container'),
+            chatBox: document.getElementById('chat-box'),
+            msgInput: document.getElementById('message-input'),
+            sendBtn: document.getElementById('send-btn'),
+            avatarGrid: document.getElementById('avatar-grid'),
+            nickInput: document.getElementById('nickname-input'),
+            loginBtn: document.getElementById('login-btn'),
+            statusMsg: document.getElementById('status-msg'),
+            modeBadge: document.getElementById('mode-badge'),
+            configInput: document.getElementById('config-input'),
+            saveConfigBtn: document.getElementById('save-config-btn'),
+            sendSound: document.getElementById('send-sound')
+        };
 
         // State
-        let currentUser = null;
-        let selectedAvatar = 'https://ui-avatars.com/api/?name=Cat&background=ffb7c5&color=fff&rounded=true';
-        let db, auth, appId;
+        let state = {
+            user: null,
+            avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Cat',
+            mode: 'local', // 'firebase' or 'local'
+            db: null,
+            auth: null,
+            appId: 'default'
+        };
 
         // Avatars
         const avatars = [
             'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4',
             'https://api.dicebear.com/7.x/adventurer/svg?seed=Coco&backgroundColor=ffdfbf',
-            'https://api.dicebear.com/7.x/adventurer/svg?seed=Mittens&backgroundColor=c0aede',
             'https://api.dicebear.com/7.x/adventurer/svg?seed=Buddy&backgroundColor=d1d4f9',
-            'https://api.dicebear.com/7.x/adventurer/svg?seed=Bella&backgroundColor=ffd5dc',
-            'https://api.dicebear.com/7.x/adventurer/svg?seed=Rocky&backgroundColor=c1f5d6',
-            'https://api.dicebear.com/7.x/adventurer/svg?seed=Luna&backgroundColor=ffdfbf',
-            'https://api.dicebear.com/7.x/adventurer/svg?seed=Leo&backgroundColor=ffdfbf'
+            'https://api.dicebear.com/7.x/adventurer/svg?seed=Bella&backgroundColor=ffd5dc'
         ];
 
-        // 1. Safe Initialization with Error Handling
-        function updateStatus(msg) {
-            console.log(`[Status] ${msg}`);
-            if (connectionDebug) connectionDebug.textContent = msg;
-        }
-
-        function initApp() {
-            try {
-                if (typeof __firebase_config === 'undefined') {
-                    throw new Error("缺少 Firebase 設定 (請在支援的環境下執行)");
-                }
-                
-                const firebaseConfig = JSON.parse(__firebase_config);
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                
-                initAuthFlow();
-                initAvatarGrid();
-
-            } catch (e) {
-                console.error("Critical Init Error:", e);
-                updateStatus("初始化失敗：" + e.message);
-                loginBtn.textContent = "環境設定錯誤";
-                loginBtn.classList.add('error');
-                loginLoading.style.display = 'none';
-            }
-        }
-
-        // 2. Robust Auth Flow
-        async function initAuthFlow() {
-            updateStatus("正在連線伺服器...");
-            let authSuccess = false;
-
-            // 設定 10 秒逾時機制
-            const timeoutTimer = setTimeout(() => {
-                if (!authSuccess && loginBtn.disabled) {
-                    updateStatus("連線逾時，請檢查網路");
-                    loginBtn.textContent = "重試連線";
-                    loginBtn.disabled = false;
-                    loginLoading.style.display = 'none';
-                    
-                    // 點擊重試
-                    loginBtn.onclick = (e) => {
-                        if (loginBtn.textContent === "重試連線") {
-                            e.stopImmediatePropagation(); // 阻止原本的登入邏輯
-                            location.reload();
-                        }
-                    };
-                }
-            }, 10000);
-
-            try {
-                // 優先嘗試 Custom Token
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    updateStatus("驗證身分中 (Token)...");
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    throw new Error("No token provided");
-                }
-            } catch (error) {
-                console.warn("Custom token failed, falling back to anonymous:", error);
-                updateStatus("切換至匿名連線模式...");
-                
-                try {
-                    await signInAnonymously(auth);
-                } catch (anonError) {
-                    console.error("Anonymous auth failed:", anonError);
-                    updateStatus("連線失敗：" + anonError.message);
-                    clearTimeout(timeoutTimer);
-                    return; // Stop here
-                }
-            }
-            
-            authSuccess = true;
-            clearTimeout(timeoutTimer);
-        }
-
-        // 3. Listen for Auth Success
-        // 必須放在 initApp 之後執行，但因為是 module，這裡 auth 可能還沒定義
-        // 所以我們將監聽器放在 initApp 內部或確保順序。
-        // 為簡化，直接在全域執行 initApp，因為 module 頂層 await 支援度不一
-        
-        initApp(); // Start the app
-
-        if (auth) {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    console.log("Auth State: Connected as", user.uid);
-                    currentUser = {
-                        uid: user.uid,
-                        name: "Guest",
-                        avatar: selectedAvatar
-                    };
-                    
-                    // Update UI
-                    loginLoading.style.display = 'none';
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = "進入聊天室";
-                    loginBtn.classList.remove('error');
-                    updateStatus("伺服器連線成功！請輸入暱稱");
-                }
-            });
-        }
-
-        function initAvatarGrid() {
-            avatars.forEach((url, index) => {
+        // 1. 初始化 (環境偵測)
+        async function init() {
+            // 建立大頭貼選單
+            avatars.forEach((url, i) => {
                 const div = document.createElement('div');
-                div.className = 'avatar-option';
-                if (index === 0) {
-                    div.classList.add('selected');
-                    selectedAvatar = url;
-                }
-                const img = document.createElement('img');
-                img.src = url;
-                div.appendChild(img);
+                div.className = `avatar-option ${i === 0 ? 'selected' : ''}`;
+                if(i===0) state.avatar = url;
+                div.innerHTML = `<img src="${url}">`;
                 div.onclick = () => {
-                    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+                    document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected'));
                     div.classList.add('selected');
-                    selectedAvatar = url;
+                    state.avatar = url;
                 };
-                avatarGrid.appendChild(div);
+                els.avatarGrid.appendChild(div);
             });
+
+            // 檢查是否有儲存的 Config
+            const savedConfig = localStorage.getItem('chat_firebase_config');
+            let configToUse = null;
+
+            if (savedConfig) {
+                try {
+                    configToUse = JSON.parse(savedConfig);
+                    els.statusMsg.innerText = "偵測到已儲存的設定";
+                } catch(e) { console.error("Config parse error"); }
+            } else if (typeof __firebase_config !== 'undefined') {
+                configToUse = JSON.parse(__firebase_config);
+                els.statusMsg.innerText = "使用環境預設設定";
+            }
+
+            if (configToUse) {
+                // 有 Config -> 嘗試連線 Firebase
+                try {
+                    const app = initializeApp(configToUse);
+                    state.db = getFirestore(app);
+                    state.auth = getAuth(app);
+                    state.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    state.mode = 'firebase';
+                    
+                    // Auth
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(state.auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(state.auth);
+                    }
+
+                    onAuthStateChanged(state.auth, user => {
+                        if(user) {
+                            state.user = { uid: user.uid };
+                            els.loginBtn.innerText = "進入雲端聊天室";
+                            els.modeBadge.innerText = "☁️ 雲端模式";
+                            els.statusMsg.innerText = "已連線伺服器";
+                        }
+                    });
+
+                } catch (e) {
+                    console.error("Firebase Init Failed:", e);
+                    useLocalMode("連線失敗，切換至本機模式");
+                }
+            } else {
+                // 無 Config -> 本機模式
+                useLocalMode("無雲端設定，使用本機模式");
+            }
         }
 
-        // Login Action
-        loginBtn.addEventListener('click', (e) => {
-            if (loginBtn.textContent === "重試連線") return; // Handled by inline handler above
-            if (loginBtn.disabled) return;
+        function useLocalMode(msg) {
+            state.mode = 'local';
+            state.user = { uid: 'local-' + Math.random().toString(36).substr(2, 9) };
+            els.loginBtn.innerText = "進入本機聊天室";
+            els.modeBadge.innerText = "🏠 本機模式 (同裝置)";
+            els.statusMsg.innerText = msg;
+            
+            // 監聽本機廣播 (跨分頁用)
+            const bc = new BroadcastChannel('chat_channel');
+            bc.onmessage = (event) => {
+                const msgs = getLocalMessages();
+                renderMessages(msgs);
+            };
+        }
 
-            const name = nicknameInput.value.trim();
-            if (!name) {
-                alert("請輸入暱稱喔！");
+        // 2. 登入邏輯
+        els.loginBtn.onclick = () => {
+            const name = els.nickInput.value.trim();
+            if (!name) return alert("請輸入暱稱！");
+            state.user.name = name;
+            state.user.avatar = state.avatar;
+
+            els.loginScreen.style.opacity = 0;
+            setTimeout(() => {
+                els.loginScreen.style.display = 'none';
+                els.appContainer.style.display = 'flex';
+                startListening();
+            }, 500);
+        };
+
+        // 3. 訊息監聽 (雙模式)
+        function startListening() {
+            if (state.mode === 'firebase') {
+                // Firebase 模式
+                const q = collection(state.db, 'artifacts', state.appId, 'public', 'data', 'chat_messages');
+                onSnapshot(q, (snapshot) => {
+                    const msgs = [];
+                    snapshot.forEach(doc => msgs.push(doc.data()));
+                    msgs.sort((a,b) => a.timestamp - b.timestamp);
+                    renderMessages(msgs.slice(-50));
+                });
+            } else {
+                // 本機模式 (LocalStorage)
+                renderMessages(getLocalMessages());
+                // 輪詢或是依賴 BroadcastChannel 更新
+            }
+        }
+
+        function getLocalMessages() {
+            return JSON.parse(localStorage.getItem('local_chat_msgs') || '[]');
+        }
+
+        function renderMessages(msgs) {
+            els.chatBox.innerHTML = '';
+            msgs.forEach(msg => {
+                const isMe = msg.userId === state.user.uid;
+                const div = document.createElement('div');
+                div.className = `message-row ${isMe ? 'me' : 'other'}`;
+                
+                const timeStr = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                div.innerHTML = `
+                    <div class="avatar"><img src="${msg.avatarUrl}"></div>
+                    <div class="message-content">
+                        ${!isMe ? `<div class="sender-name">${msg.senderName}</div>` : ''}
+                        <div class="bubble">${msg.text}</div>
+                        <div class="message-time">${timeStr}</div>
+                    </div>
+                `;
+                els.chatBox.appendChild(div);
+            });
+            els.chatBox.scrollTop = els.chatBox.scrollHeight;
+        }
+
+        // 4. 發送訊息
+        els.sendBtn.onclick = async () => {
+            const text = els.msgInput.value.trim();
+            if (!text) return;
+            
+            els.msgInput.value = '';
+            els.sendSound.play().catch(()=>{});
+
+            const msgData = {
+                text,
+                senderName: state.user.name,
+                avatarUrl: state.user.avatar,
+                userId: state.user.uid,
+                timestamp: Date.now()
+            };
+
+            if (state.mode === 'firebase') {
+                await addDoc(collection(state.db, 'artifacts', state.appId, 'public', 'data', 'chat_messages'), msgData);
+            } else {
+                // 寫入 LocalStorage 並廣播
+                const msgs = getLocalMessages();
+                msgs.push(msgData);
+                if(msgs.length > 50) msgs.shift();
+                localStorage.setItem('local_chat_msgs', JSON.stringify(msgs));
+                
+                // 廣播給其他分頁
+                new BroadcastChannel('chat_channel').postMessage('update');
+                renderMessages(msgs);
+            }
+        };
+
+        // 5. 設定 Config
+        els.saveConfigBtn.onclick = () => {
+            const val = els.configInput.value.trim();
+            if(!val) {
+                if(confirm("確定要清除設定並回到本機模式嗎？")) {
+                    localStorage.removeItem('chat_firebase_config');
+                    location.reload();
+                }
                 return;
             }
-
-            currentUser.name = name;
-            currentUser.avatar = selectedAvatar;
-
-            loginScreen.style.opacity = '0';
-            setTimeout(() => {
-                loginScreen.style.display = 'none';
-                appContainer.style.display = 'flex';
-                startChatListener();
-                statusText.innerText = "即時連線中";
-            }, 500);
-        });
-
-        // Chat Listener
-        function startChatListener() {
-            if (!auth.currentUser || !db) return;
-            
-            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages');
-            
-            onSnapshot(colRef, (snapshot) => {
-                const messages = [];
-                snapshot.forEach(doc => {
-                    messages.push({ id: doc.id, ...doc.data() });
-                });
-                messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                renderMessages(messages.slice(-50));
-            }, (error) => {
-                console.error("Firestore error:", error);
-                statusText.innerText = "連線中斷";
-            });
-        }
-
-        function renderMessages(messages) {
-            chatBox.innerHTML = '';
-            messages.forEach(msg => {
-                const isMe = msg.userId === currentUser.uid;
-                const row = document.createElement('div');
-                row.className = `message-row ${isMe ? 'me' : 'other'}`;
-                
-                const avatarDiv = document.createElement('div');
-                avatarDiv.className = 'avatar';
-                const avatarImg = document.createElement('img');
-                avatarImg.src = msg.avatarUrl || 'https://via.placeholder.com/40';
-                avatarDiv.appendChild(avatarImg);
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'message-content';
-                
-                if (!isMe) {
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = 'sender-name';
-                    nameDiv.textContent = msg.senderName || 'Anonymous';
-                    contentDiv.appendChild(nameDiv);
-                }
-
-                const bubble = document.createElement('div');
-                bubble.className = 'bubble';
-                bubble.textContent = msg.text;
-                
-                const timeDiv = document.createElement('div');
-                timeDiv.className = 'message-time';
-                timeDiv.textContent = formatTime(msg.timestamp);
-
-                contentDiv.appendChild(bubble);
-                contentDiv.appendChild(timeDiv);
-                row.appendChild(avatarDiv);
-                row.appendChild(contentDiv);
-                chatBox.appendChild(row);
-            });
-            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
-        }
-
-        async function sendMessage() {
-            const text = messageInput.value.trim();
-            if (!text || !currentUser || !db) return;
-
-            messageInput.value = '';
             try {
-                sendSound.currentTime = 0;
-                sendSound.play().catch(() => {});
-                
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages'), {
-                    text: text,
-                    senderName: currentUser.name,
-                    avatarUrl: currentUser.avatar,
-                    userId: currentUser.uid,
-                    timestamp: Date.now()
-                });
-            } catch (error) {
-                console.error("Send error:", error);
+                JSON.parse(val); // 驗證 JSON 格式
+                localStorage.setItem('chat_firebase_config', val);
+                location.reload();
+            } catch(e) {
+                alert("JSON 格式錯誤，請檢查內容！");
             }
-        }
+        };
 
-        function formatTime(ts) {
-            if (!ts) return '';
-            const date = new Date(ts);
-            let hours = date.getHours();
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            return `${hours}:${minutes} ${ampm}`;
-        }
+        // 鍵盤 Enter 發送
+        els.msgInput.onkeydown = (e) => { if(e.key === 'Enter') els.sendBtn.click(); };
 
-        // Event Listeners
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        // 主題切換
+        window.toggleTheme = () => document.body.classList.toggle('dark-mode');
 
-        // Theme Toggle
-        let isDarkMode = false;
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            isDarkMode = !isDarkMode;
-            if (isDarkMode) {
-                themeIcon.innerHTML = '<path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/>';
-            } else {
-                themeIcon.innerHTML = '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
-            }
-        });
+        // 啟動
+        init();
+
     </script>
 </body>
 </html>
