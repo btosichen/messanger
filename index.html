@@ -26,7 +26,8 @@
 
             --btn-primary: #ff9a9e;
             --btn-hover: #ff758c;
-            --btn-disabled: #cccccc; /* 新增停用顏色 */
+            --btn-disabled: #cccccc;
+            --btn-error: #ff6b6b; /* 新增錯誤狀態顏色 */
             --text-meta: #888;
         }
 
@@ -47,6 +48,7 @@
             --btn-primary: #e94560;
             --btn-hover: #ff2e63;
             --btn-disabled: #555555;
+            --btn-error: #d63031;
             --text-meta: #aaa;
         }
 
@@ -59,12 +61,12 @@
             margin: 0;
             padding: 0;
             font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
-            -webkit-tap-highlight-color: transparent; /* 移除手機點擊高亮 */
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--bg-color);
-            height: 100dvh; /* 使用 dvh 避免手機網址列遮擋 */
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -161,11 +163,21 @@
             transition: background-color 0.3s;
         }
 
-        /* 停用狀態的按鈕 */
         .login-btn:disabled {
             background-color: var(--btn-disabled);
             cursor: not-allowed;
-            opacity: 0.7;
+            opacity: 0.8;
+        }
+        
+        .login-btn.error {
+            background-color: var(--btn-error);
+        }
+
+        .connection-status {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: var(--text-meta);
+            min-height: 1.2em;
         }
 
         /* * =========================================
@@ -173,13 +185,12 @@
          * =========================================
          */
         #app-container {
-            display: none; /* 登入前隱藏 */
+            display: none;
             flex-direction: column;
             height: 100%;
             width: 100%;
         }
 
-        /* Header */
         header {
             background-color: var(--header-bg);
             color: var(--header-text);
@@ -217,7 +228,6 @@
             border-radius: 50%;
         }
 
-        /* Main Chat Area */
         main {
             flex: 1;
             background-color: var(--chat-area-bg);
@@ -226,7 +236,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            scroll-behavior: auto; /* 改為 auto 避免程式捲動時太慢 */
+            scroll-behavior: auto;
         }
 
         .message-row {
@@ -306,7 +316,7 @@
             color: var(--text-meta);
             margin-top: 2px;
             margin-right: 4px;
-            text-align: right; /* 時間統一靠右或跟隨氣泡 */
+            text-align: right;
         }
         .other .message-time {
             text-align: left;
@@ -318,10 +328,9 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Footer Input */
         footer {
             background-color: var(--input-area-bg);
-            padding: 8px 12px; /* 縮小 padding 增加手機打字空間 */
+            padding: 8px 12px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -345,7 +354,7 @@
             background: transparent;
             padding: 8px 0;
             outline: none;
-            font-size: 16px; /* 防止 iOS Safari 自動縮放 */
+            font-size: 16px;
             color: var(--header-text);
         }
 
@@ -374,7 +383,6 @@
             fill: currentColor;
         }
 
-        /* Loading Indicator */
         .loading-spinner {
             border: 3px solid rgba(0,0,0,0.1);
             border-top: 3px solid var(--btn-primary);
@@ -382,7 +390,7 @@
             width: 24px;
             height: 24px;
             animation: spin 1s linear infinite;
-            display: none; /* 預設隱藏 */
+            display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -395,14 +403,15 @@
         <div class="login-card">
             <div class="login-title">歡迎來到 ChatMew 🐱</div>
             
-            <div class="avatar-selection" id="avatar-grid">
-                <!-- 由 JS 生成選項 -->
-            </div>
+            <div class="avatar-selection" id="avatar-grid"></div>
 
             <input type="text" id="nickname-input" class="login-input" placeholder="請輸入你的暱稱" maxlength="10">
-            <!-- 預設設為 disabled，等連線成功才開放 -->
+            
             <button id="login-btn" class="login-btn" disabled>連線伺服器中...</button>
             <div id="login-loading" class="loading-spinner" style="margin: 10px auto; display: block;"></div>
+            
+            <!-- 新增狀態顯示文字 -->
+            <div id="connection-debug" class="connection-status">正在初始化...</div>
         </div>
     </div>
 
@@ -424,9 +433,7 @@
             </div>
         </header>
 
-        <main id="chat-box">
-            <!-- 訊息將在此顯示 -->
-        </main>
+        <main id="chat-box"></main>
 
         <footer>
             <div class="input-group">
@@ -438,30 +445,15 @@
         </footer>
     </div>
 
-    <!-- 音效 -->
     <audio id="send-sound">
-        <source src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq" type="audio/mp3">
+        <source src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq" type="audio/mp3">
     </audio>
 
     <script type="module">
-        // ------------------------------------------------------------------
-        // Firebase Setup & Imports (使用最新的 11.6.1 版本)
-        // ------------------------------------------------------------------
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // State Management
-        let currentUser = null; // { uid, name, avatar }
-        let selectedAvatar = 'https://ui-avatars.com/api/?name=Cat&background=ffb7c5&color=fff&rounded=true'; // Default
-        
         // DOM Elements
         const loginScreen = document.getElementById('login-screen');
         const appContainer = document.getElementById('app-container');
@@ -473,11 +465,17 @@
         const loginBtn = document.getElementById('login-btn');
         const loginLoading = document.getElementById('login-loading');
         const statusText = document.getElementById('status-text');
+        const connectionDebug = document.getElementById('connection-debug');
         const sendSound = document.getElementById('send-sound');
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
 
-        // Avatar List (Cute Animals)
+        // State
+        let currentUser = null;
+        let selectedAvatar = 'https://ui-avatars.com/api/?name=Cat&background=ffb7c5&color=fff&rounded=true';
+        let db, auth, appId;
+
+        // Avatars
         const avatars = [
             'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4',
             'https://api.dicebear.com/7.x/adventurer/svg?seed=Coco&backgroundColor=ffdfbf',
@@ -489,11 +487,113 @@
             'https://api.dicebear.com/7.x/adventurer/svg?seed=Leo&backgroundColor=ffdfbf'
         ];
 
-        // ------------------------------------------------------------------
-        // Initialization
-        // ------------------------------------------------------------------
+        // 1. Safe Initialization with Error Handling
+        function updateStatus(msg) {
+            console.log(`[Status] ${msg}`);
+            if (connectionDebug) connectionDebug.textContent = msg;
+        }
+
+        function initApp() {
+            try {
+                if (typeof __firebase_config === 'undefined') {
+                    throw new Error("缺少 Firebase 設定 (請在支援的環境下執行)");
+                }
+                
+                const firebaseConfig = JSON.parse(__firebase_config);
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                initAuthFlow();
+                initAvatarGrid();
+
+            } catch (e) {
+                console.error("Critical Init Error:", e);
+                updateStatus("初始化失敗：" + e.message);
+                loginBtn.textContent = "環境設定錯誤";
+                loginBtn.classList.add('error');
+                loginLoading.style.display = 'none';
+            }
+        }
+
+        // 2. Robust Auth Flow
+        async function initAuthFlow() {
+            updateStatus("正在連線伺服器...");
+            let authSuccess = false;
+
+            // 設定 10 秒逾時機制
+            const timeoutTimer = setTimeout(() => {
+                if (!authSuccess && loginBtn.disabled) {
+                    updateStatus("連線逾時，請檢查網路");
+                    loginBtn.textContent = "重試連線";
+                    loginBtn.disabled = false;
+                    loginLoading.style.display = 'none';
+                    
+                    // 點擊重試
+                    loginBtn.onclick = (e) => {
+                        if (loginBtn.textContent === "重試連線") {
+                            e.stopImmediatePropagation(); // 阻止原本的登入邏輯
+                            location.reload();
+                        }
+                    };
+                }
+            }, 10000);
+
+            try {
+                // 優先嘗試 Custom Token
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    updateStatus("驗證身分中 (Token)...");
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    throw new Error("No token provided");
+                }
+            } catch (error) {
+                console.warn("Custom token failed, falling back to anonymous:", error);
+                updateStatus("切換至匿名連線模式...");
+                
+                try {
+                    await signInAnonymously(auth);
+                } catch (anonError) {
+                    console.error("Anonymous auth failed:", anonError);
+                    updateStatus("連線失敗：" + anonError.message);
+                    clearTimeout(timeoutTimer);
+                    return; // Stop here
+                }
+            }
+            
+            authSuccess = true;
+            clearTimeout(timeoutTimer);
+        }
+
+        // 3. Listen for Auth Success
+        // 必須放在 initApp 之後執行，但因為是 module，這裡 auth 可能還沒定義
+        // 所以我們將監聽器放在 initApp 內部或確保順序。
+        // 為簡化，直接在全域執行 initApp，因為 module 頂層 await 支援度不一
         
-        // 1. Generate Avatar Selection Grid
+        initApp(); // Start the app
+
+        if (auth) {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    console.log("Auth State: Connected as", user.uid);
+                    currentUser = {
+                        uid: user.uid,
+                        name: "Guest",
+                        avatar: selectedAvatar
+                    };
+                    
+                    // Update UI
+                    loginLoading.style.display = 'none';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = "進入聊天室";
+                    loginBtn.classList.remove('error');
+                    updateStatus("伺服器連線成功！請輸入暱稱");
+                }
+            });
+        }
+
         function initAvatarGrid() {
             avatars.forEach((url, index) => {
                 const div = document.createElement('div');
@@ -502,10 +602,8 @@
                     div.classList.add('selected');
                     selectedAvatar = url;
                 }
-                
                 const img = document.createElement('img');
                 img.src = url;
-                
                 div.appendChild(img);
                 div.onclick = () => {
                     document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
@@ -515,55 +613,11 @@
                 avatarGrid.appendChild(div);
             });
         }
-        initAvatarGrid();
 
-        // 2. Authentication Flow (修復：增加備援機制與狀態提示)
-        async function initAuth() {
-            try {
-                // 優先使用環境提供的 token (如果有)
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Auth error, attempting fallback:", error);
-                // 備案：如果 Custom Token 失敗，強制使用匿名登入
-                try {
-                    await signInAnonymously(auth);
-                } catch (fallbackError) {
-                    console.error("Fallback failed:", fallbackError);
-                    alert("連線失敗，請重新整理網頁再試一次。");
-                    loginBtn.textContent = "連線失敗";
-                }
-            }
-        }
-        // 啟動驗證流程
-        initAuth();
-
-        // 監聽驗證狀態，只有驗證成功才開放按鈕
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = {
-                    uid: user.uid,
-                    name: "Guest",
-                    avatar: selectedAvatar
-                };
-                // 驗證成功，解鎖按鈕
-                loginLoading.style.display = 'none';
-                loginBtn.disabled = false;
-                loginBtn.textContent = "進入聊天室";
-                console.log("Ready to chat as:", user.uid);
-            }
-        });
-
-        // ------------------------------------------------------------------
-        // App Logic
-        // ------------------------------------------------------------------
-
-        // Handle Login Button Click
-        loginBtn.addEventListener('click', () => {
-            if (loginBtn.disabled) return; // 雙重保護
+        // Login Action
+        loginBtn.addEventListener('click', (e) => {
+            if (loginBtn.textContent === "重試連線") return; // Handled by inline handler above
+            if (loginBtn.disabled) return;
 
             const name = nicknameInput.value.trim();
             if (!name) {
@@ -571,27 +625,21 @@
                 return;
             }
 
-            // Update local user state
             currentUser.name = name;
             currentUser.avatar = selectedAvatar;
 
-            // Switch UI
             loginScreen.style.opacity = '0';
-            
-            // 延遲一點點讓動畫跑完，確保 DOM 切換順暢
             setTimeout(() => {
                 loginScreen.style.display = 'none';
                 appContainer.style.display = 'flex';
-                
-                // 開始接收訊息
                 startChatListener();
                 statusText.innerText = "即時連線中";
             }, 500);
         });
 
-        // Firestore Listener (Real-time Chat)
+        // Chat Listener
         function startChatListener() {
-            if (!auth.currentUser) return;
+            if (!auth.currentUser || !db) return;
             
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages');
             
@@ -600,37 +648,27 @@
                 snapshot.forEach(doc => {
                     messages.push({ id: doc.id, ...doc.data() });
                 });
-
-                // Sort in memory
                 messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                
-                // Keep only last 50 messages
-                const recentMessages = messages.slice(-50);
-
-                renderMessages(recentMessages);
+                renderMessages(messages.slice(-50));
             }, (error) => {
                 console.error("Firestore error:", error);
                 statusText.innerText = "連線中斷";
             });
         }
 
-        // Render Messages
         function renderMessages(messages) {
-            chatBox.innerHTML = ''; 
-            
+            chatBox.innerHTML = '';
             messages.forEach(msg => {
                 const isMe = msg.userId === currentUser.uid;
                 const row = document.createElement('div');
                 row.className = `message-row ${isMe ? 'me' : 'other'}`;
                 
-                // Avatar
                 const avatarDiv = document.createElement('div');
                 avatarDiv.className = 'avatar';
                 const avatarImg = document.createElement('img');
                 avatarImg.src = msg.avatarUrl || 'https://via.placeholder.com/40';
                 avatarDiv.appendChild(avatarImg);
                 
-                // Content
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'message-content';
                 
@@ -641,41 +679,32 @@
                     contentDiv.appendChild(nameDiv);
                 }
 
-                // Bubble
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
                 bubble.textContent = msg.text;
                 
-                // Time
                 const timeDiv = document.createElement('div');
                 timeDiv.className = 'message-time';
                 timeDiv.textContent = formatTime(msg.timestamp);
 
                 contentDiv.appendChild(bubble);
                 contentDiv.appendChild(timeDiv);
-
                 row.appendChild(avatarDiv);
                 row.appendChild(contentDiv);
                 chatBox.appendChild(row);
             });
-
-            // Scroll to bottom
-            setTimeout(() => {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 50);
+            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 50);
         }
 
-        // Send Message Function
         async function sendMessage() {
             const text = messageInput.value.trim();
-            if (!text || !currentUser) return;
+            if (!text || !currentUser || !db) return;
 
-            messageInput.value = ''; 
-            
+            messageInput.value = '';
             try {
                 sendSound.currentTime = 0;
                 sendSound.play().catch(() => {});
-
+                
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages'), {
                     text: text,
                     senderName: currentUser.name,
@@ -684,12 +713,10 @@
                     timestamp: Date.now()
                 });
             } catch (error) {
-                console.error("Error sending message:", error);
-                // 手機上通常是網路不穩，這裡不做 alert 避免干擾體驗
+                console.error("Send error:", error);
             }
         }
 
-        // Utilities
         function formatTime(ts) {
             if (!ts) return '';
             const date = new Date(ts);
@@ -701,16 +728,10 @@
             return `${hours}:${minutes} ${ampm}`;
         }
 
-        // ------------------------------------------------------------------
         // Event Listeners
-        // ------------------------------------------------------------------
-        
         sendBtn.addEventListener('click', sendMessage);
-        
         messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
+            if (e.key === 'Enter') sendMessage();
         });
 
         // Theme Toggle
@@ -724,7 +745,6 @@
                 themeIcon.innerHTML = '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
             }
         });
-
     </script>
 </body>
 </html>
