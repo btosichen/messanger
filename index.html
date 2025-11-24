@@ -26,6 +26,7 @@
 
             --btn-primary: #ff9a9e;
             --btn-hover: #ff758c;
+            --btn-disabled: #cccccc; /* 新增停用顏色 */
             --text-meta: #888;
         }
 
@@ -45,6 +46,7 @@
 
             --btn-primary: #e94560;
             --btn-hover: #ff2e63;
+            --btn-disabled: #555555;
             --text-meta: #aaa;
         }
 
@@ -156,6 +158,14 @@
             font-size: 1.1rem;
             cursor: pointer;
             font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        /* 停用狀態的按鈕 */
+        .login-btn:disabled {
+            background-color: var(--btn-disabled);
+            cursor: not-allowed;
+            opacity: 0.7;
         }
 
         /* * =========================================
@@ -390,8 +400,9 @@
             </div>
 
             <input type="text" id="nickname-input" class="login-input" placeholder="請輸入你的暱稱" maxlength="10">
-            <button id="login-btn" class="login-btn">進入聊天室</button>
-            <div id="login-loading" class="loading-spinner" style="margin: 10px auto;"></div>
+            <!-- 預設設為 disabled，等連線成功才開放 -->
+            <button id="login-btn" class="login-btn" disabled>連線伺服器中...</button>
+            <div id="login-loading" class="loading-spinner" style="margin: 10px auto; display: block;"></div>
         </div>
     </div>
 
@@ -434,11 +445,11 @@
 
     <script type="module">
         // ------------------------------------------------------------------
-        // Firebase Setup & Imports
+        // Firebase Setup & Imports (使用最新的 11.6.1 版本)
         // ------------------------------------------------------------------
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = JSON.parse(__firebase_config);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -506,36 +517,43 @@
         }
         initAvatarGrid();
 
-        // 2. Authentication Flow
+        // 2. Authentication Flow (修復：增加備援機制與狀態提示)
         async function initAuth() {
-            loginLoading.style.display = 'block';
-            loginBtn.disabled = true;
-
             try {
+                // 優先使用環境提供的 token (如果有)
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
             } catch (error) {
-                console.error("Auth error:", error);
-                alert("登入系統發生錯誤，請重新整理頁面。");
-            } finally {
-                loginLoading.style.display = 'none';
-                loginBtn.disabled = false;
+                console.error("Auth error, attempting fallback:", error);
+                // 備案：如果 Custom Token 失敗，強制使用匿名登入
+                try {
+                    await signInAnonymously(auth);
+                } catch (fallbackError) {
+                    console.error("Fallback failed:", fallbackError);
+                    alert("連線失敗，請重新整理網頁再試一次。");
+                    loginBtn.textContent = "連線失敗";
+                }
             }
         }
+        // 啟動驗證流程
         initAuth();
 
-        // Listen for auth state
+        // 監聽驗證狀態，只有驗證成功才開放按鈕
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = {
                     uid: user.uid,
-                    name: "Guest", // Will be updated on login
+                    name: "Guest",
                     avatar: selectedAvatar
                 };
-                console.log("Authenticated as:", user.uid);
+                // 驗證成功，解鎖按鈕
+                loginLoading.style.display = 'none';
+                loginBtn.disabled = false;
+                loginBtn.textContent = "進入聊天室";
+                console.log("Ready to chat as:", user.uid);
             }
         });
 
@@ -545,13 +563,11 @@
 
         // Handle Login Button Click
         loginBtn.addEventListener('click', () => {
+            if (loginBtn.disabled) return; // 雙重保護
+
             const name = nicknameInput.value.trim();
             if (!name) {
                 alert("請輸入暱稱喔！");
-                return;
-            }
-            if (!currentUser) {
-                alert("正在連線到伺服器，請稍候...");
                 return;
             }
 
@@ -561,22 +577,22 @@
 
             // Switch UI
             loginScreen.style.opacity = '0';
+            
+            // 延遲一點點讓動畫跑完，確保 DOM 切換順暢
             setTimeout(() => {
                 loginScreen.style.display = 'none';
                 appContainer.style.display = 'flex';
-                // Trigger reflow for animation if needed, but display flex is enough
+                
+                // 開始接收訊息
                 startChatListener();
                 statusText.innerText = "即時連線中";
             }, 500);
         });
 
         // Firestore Listener (Real-time Chat)
-        let isFirstLoad = true;
-        
         function startChatListener() {
             if (!auth.currentUser) return;
             
-            // Query all messages (simple query rule)
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages');
             
             onSnapshot(colRef, (snapshot) => {
@@ -585,11 +601,10 @@
                     messages.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Sort in memory (Rule: No complex orderBy in query)
-                // Filter out invalid timestamps just in case
+                // Sort in memory
                 messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                 
-                // Keep only last 50 messages to prevent DOM explosion
+                // Keep only last 50 messages
                 const recentMessages = messages.slice(-50);
 
                 renderMessages(recentMessages);
@@ -601,7 +616,7 @@
 
         // Render Messages
         function renderMessages(messages) {
-            chatBox.innerHTML = ''; // Clear and rebuild (simple approach for small lists)
+            chatBox.innerHTML = ''; 
             
             messages.forEach(msg => {
                 const isMe = msg.userId === currentUser.uid;
@@ -619,7 +634,6 @@
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'message-content';
                 
-                // Name (Only for others)
                 if (!isMe) {
                     const nameDiv = document.createElement('div');
                     nameDiv.className = 'sender-name';
@@ -656,24 +670,22 @@
             const text = messageInput.value.trim();
             if (!text || !currentUser) return;
 
-            messageInput.value = ''; // Clear immediately
+            messageInput.value = ''; 
             
             try {
-                // Play sound
                 sendSound.currentTime = 0;
                 sendSound.play().catch(() => {});
 
-                // Add to Firestore
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages'), {
                     text: text,
                     senderName: currentUser.name,
                     avatarUrl: currentUser.avatar,
                     userId: currentUser.uid,
-                    timestamp: Date.now() // Use client timestamp for simple sorting
+                    timestamp: Date.now()
                 });
             } catch (error) {
                 console.error("Error sending message:", error);
-                alert("訊息發送失敗");
+                // 手機上通常是網路不穩，這裡不做 alert 避免干擾體驗
             }
         }
 
